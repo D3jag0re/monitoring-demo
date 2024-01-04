@@ -14,7 +14,7 @@ locals {
   # Networking 
   vnet_addressprefixes = ["172.17.0.0/16"]
 
-  subnet_main_addressprefixes      = ["172.17.2.0/24"]
+  subnet_main_addressprefixes = ["172.17.2.0/24"]
 
   # Database (WARNING: SENSITIVE INFORMATION SEE NOTES SECTION IN README FOR EXPLANATION)
 

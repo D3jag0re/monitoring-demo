@@ -9,7 +9,7 @@ terraform {
 
 
 provider "azurerm" {
-    skip_provider_registration = true
+  skip_provider_registration = true
   features {
     virtual_machine {
       delete_os_disk_on_deletion     = true

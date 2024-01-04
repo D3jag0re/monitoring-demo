@@ -47,7 +47,7 @@ resource "azurerm_network_interface" "stressnic" {
   }
 }
 
-# Create Network Security Group and Rule
+# Create Network Security Group and Rules
 resource "azurerm_network_security_group" "my_terraform_nsg" {
   name                = "myNetworkSecurityGroup"
   location            = azurerm_resource_group.rg.location
@@ -63,6 +63,31 @@ resource "azurerm_network_security_group" "my_terraform_nsg" {
     destination_port_range     = "22"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "prometheus-rule"
+    priority                   = 1002
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "9100"
+    source_address_prefixes    = local.subnet_main_addressprefixes
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "grafana-rule"
+    priority                   = 1003
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "3000"
+    source_address_prefixes    = local.subnet_main_addressprefixes
+    destination_address_prefix = "*"
+
   }
 }
 
@@ -88,7 +113,7 @@ resource "azurerm_linux_virtual_machine" "stress" {
   ]
 
   admin_ssh_key {
-    username   = "adminuser"
+    username = "adminuser"
     #public_key = file("~/.ssh/id_rsa.pub")
     public_key = tls_private_key.example_ssh.public_key_openssh
   }
@@ -112,7 +137,7 @@ resource "azurerm_linux_virtual_machine" "stress" {
 
 # Create public IPs
 resource "azurerm_public_ip" "mon_public_ip" {
-  name                = "myPublicIP"
+  name                = "myPublicIP2"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   allocation_method   = "Dynamic"
@@ -120,12 +145,12 @@ resource "azurerm_public_ip" "mon_public_ip" {
 
 # Create Network Interface 
 resource "azurerm_network_interface" "monnic" {
-  name                = "estress-nic"
+  name                = "mon-nic"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
   ip_configuration {
-    name                          = "internal"
+    name                          = "internal2"
     subnet_id                     = azurerm_subnet.example.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.mon_public_ip.id
@@ -134,7 +159,7 @@ resource "azurerm_network_interface" "monnic" {
 
 # Create Network Security Group and Rule
 resource "azurerm_network_security_group" "mon_terraform_nsg" {
-  name                = "myNetworkSecurityGroup"
+  name                = "myNetworkSecurityGroup2"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
@@ -173,7 +198,7 @@ resource "azurerm_linux_virtual_machine" "mon" {
   ]
 
   admin_ssh_key {
-    username   = "adminuser"
+    username = "adminuser"
     #public_key = file("~/.ssh/id_rsa.pub")
     public_key = tls_private_key.mon_ssh.public_key_openssh
   }
