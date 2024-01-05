@@ -127,7 +127,7 @@ Start as background process
 
 
 ```
-sudo vi /etc/prometheus/prometheus.yml
+nohup prometheus --config.file=/etc/prometheus/prometheus.yml &
 ```
 
 
