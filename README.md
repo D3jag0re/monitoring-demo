@@ -152,7 +152,7 @@ sudo apt-get install -y apt-transport-https software-properties-common wget
 Import CGP Key
 
 ```
-sudo mkdir -p /etc/apt/keyrings/
+mkdir -p /etc/apt/keyrings/
 wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
 ```
 

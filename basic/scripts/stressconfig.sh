@@ -12,7 +12,7 @@ tar xvfz node_exporter-1.7.0.linux-amd64.tar.gz
 
 # Move it
 echo "Moving Prometheus Node Exporter to /usr/local/bin/..."
-sudo mv node_exporter-X.X.X.linux-amd64/node_exporter /usr/local/bin/
+sudo mv node_exporter-1.7.0.linux-amd64/node_exporter /usr/local/bin/
 
 #Create Service 
 echo "Creating systemd service..."
