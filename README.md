@@ -10,7 +10,15 @@ The Basic demo will spin up 2 VMs:
 - mon : This is the VM we will be running Prometheus and Grafana on 
 These will both be deployed in Azure via Terraform. 
 
-## Manual Configuration 
+## Configuration 
+
+Inside basic/scripts there is a configuration bash script for each server.
+
+
+
+
+
+## Manual Configuration (Follow only if not using the scripts)
 
 Once you deploy the infra using Terraform, we can manually configure these two VMs using the following steps: 
 
