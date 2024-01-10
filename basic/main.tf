@@ -20,6 +20,92 @@ resource "azurerm_subnet" "example" {
   address_prefixes     = local.subnet_main_addressprefixes
 }
 
+##------------------------##
+##     Key Management     ##
+##------------------------##
+
+
+# Create KeyVault
+
+data "azurerm_client_config" "current" {}
+
+resource "azurerm_key_vault" "keyvault" {
+  name                        = "monitor-${local.env}-${local.loc}-kv-01"
+  location                    = azurerm_resource_group.rg.location
+  resource_group_name         = azurerm_resource_group.rg.name
+  enabled_for_disk_encryption = true
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+  soft_delete_retention_days  = 7
+  purge_protection_enabled    = false
+
+  sku_name = "standard"
+
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
+
+    key_permissions = [
+      "Get",
+      "List",
+    ]
+
+    secret_permissions = [
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Purge",
+    ]
+
+    storage_permissions = [
+      "Get",
+      "List",
+    ]
+  }
+}
+
+# Create Keys for Stress
+resource "tls_private_key" "example_ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# Create Keys for Mon
+resource "tls_private_key" "mon_ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+## Store Keys in Vault
+
+# Stress
+
+resource "azurerm_key_vault_secret" "ssh_private_key_stress" {
+  name         = "ssh-private-key-stress"
+  value        = tls_private_key.example_ssh.private_key_pem
+  key_vault_id = azurerm_key_vault.keyvault.id
+}
+
+resource "azurerm_key_vault_secret" "ssh_public_key_stress" {
+  name         = "ssh-public-key-stress"
+  value        = tls_private_key.example_ssh.public_key_openssh
+  key_vault_id = azurerm_key_vault.keyvault.id
+}
+
+# Mon
+
+resource "azurerm_key_vault_secret" "ssh_private_key_mon" {
+  name         = "ssh-private-key-mon"
+  value        = tls_private_key.mon_ssh.private_key_pem
+  key_vault_id = azurerm_key_vault.keyvault.id
+}
+
+resource "azurerm_key_vault_secret" "ssh_public_key_mon" {
+  name         = "ssh-public-key-mon"
+  value        = tls_private_key.mon_ssh.public_key_openssh
+  key_vault_id = azurerm_key_vault.keyvault.id
+}
+
 
 ##------------------------##
 ##          VM 1          ##
@@ -97,11 +183,6 @@ resource "azurerm_network_interface_security_group_association" "example1" {
   network_security_group_id = azurerm_network_security_group.my_terraform_nsg.id
 }
 
-resource "tls_private_key" "example_ssh" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
 resource "azurerm_linux_virtual_machine" "stress" {
   name                = "monitor-${local.env}-${local.loc}-vm-stress"
   resource_group_name = azurerm_resource_group.rg.name
@@ -113,9 +194,9 @@ resource "azurerm_linux_virtual_machine" "stress" {
   ]
 
   admin_ssh_key {
-    username = "adminuser"
-    #public_key = file("~/.ssh/id_rsa.pub")
-    public_key = tls_private_key.example_ssh.public_key_openssh
+    username   = "adminuser"
+    public_key = azurerm_key_vault_secret.ssh_public_key_stress.value
+    #public_key = tls_private_key.example_ssh.public_key_openssh
   }
 
   os_disk {
@@ -193,10 +274,6 @@ resource "azurerm_network_interface_security_group_association" "example2" {
   network_security_group_id = azurerm_network_security_group.mon_terraform_nsg.id
 }
 
-resource "tls_private_key" "mon_ssh" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
 
 resource "azurerm_linux_virtual_machine" "mon" {
   name                = "monitor-${local.env}-${local.loc}-vm-mon"
@@ -209,9 +286,9 @@ resource "azurerm_linux_virtual_machine" "mon" {
   ]
 
   admin_ssh_key {
-    username = "adminuser"
-    #public_key = file("~/.ssh/id_rsa.pub")
-    public_key = tls_private_key.mon_ssh.public_key_openssh
+    username   = "adminuser"
+    public_key = azurerm_key_vault_secret.ssh_public_key_mon.value
+    #public_key = tls_private_key.mon_ssh.public_key_openssh
   }
 
   os_disk {
@@ -225,4 +302,25 @@ resource "azurerm_linux_virtual_machine" "mon" {
     sku       = "22_04-lts"
     version   = "latest"
   }
+}
+
+##
+##
+##
+
+# This outputs the key into wsl home folder for quick use. Do this only for testing purposes. Must change permissions to 600 before using. 
+
+resource "local_file" "stress_key" {
+  content  = tls_private_key.example_ssh.private_key_pem
+  filename = local.stress_file
+  file_permission = "600" 
+
+}
+
+resource "local_file" "mon_key" {
+  content  = tls_private_key.mon_ssh.private_key_pem
+  #filename = "${path.module}/foo.bar"
+  #filename = "//wsl$/Ubuntu/home/file.txt"
+  filename = local.mon_file
+  file_permission = "600" 
 }

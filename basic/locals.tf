@@ -16,11 +16,9 @@ locals {
 
   subnet_main_addressprefixes = ["172.17.2.0/24"]
 
-  # Database (WARNING: SENSITIVE INFORMATION SEE NOTES SECTION IN README FOR EXPLANATION)
+  # File Paths 
 
-  sql_server_login_name = "test@user.com"
-  sql_server_password   = "NotaRealPassword"
-  aad_login_username    = "test@user.com"
-  object_id             = "8411414c-728e-11ee-b962-0242ac120002" #notaRealUUID
+  stress_file = "file"
+  mon_file = "file"
 
 }
