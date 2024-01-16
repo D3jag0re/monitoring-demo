@@ -5,7 +5,7 @@ These will both be deployed in Azure via Terraform.
 
 ## Configuration 
 
-Inside basic/scripts there is a configuration bash script for each server.
+Inside ./scripts there is a configuration bash script for each server.
 
 
 
